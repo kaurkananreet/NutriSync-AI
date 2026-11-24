@@ -1,0 +1,10 @@
+{
+  "description": "Track nutrition, wellness, symptoms, and menstrual cycles in one place, with AI-powered food estimates, personalized insights, and shareable health reports.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
