@@ -16,6 +16,7 @@ type Page =
   | 'insights'
   | 'recommendations'
   | 'assistant'
+  | 'community'
   | 'reports'
   | 'profile'
 
@@ -28,6 +29,7 @@ type IconName =
   | 'insights'
   | 'sparkles'
   | 'chat'
+  | 'community'
   | 'report'
   | 'profile'
   | 'bell'
@@ -57,6 +59,7 @@ const iconPaths: Record<IconName, ReactNode> = {
   insights: <><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/><path d="m4 8 6-4 6 7 5-5"/></>,
   sparkles: <><path d="m12 3 1.2 3.3L16.5 8l-3.3 1.3L12 13l-1.2-3.7L7.5 8l3.3-1.7L12 3ZM5 14l.8 2.2L8 17l-2.2.8L5 20l-.8-2.2L2 17l2.2-.8L5 14ZM19 13l.8 2.2L22 16l-2.2.8L19 19l-.8-2.2L16 16l2.2-.8L19 13Z"/></>,
   chat: <><path d="M21 14a4 4 0 0 1-4 4H8l-5 3 1.6-4A6 6 0 0 1 3 13V8a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v6Z"/><path d="M8 10h8M8 13h5"/></>,
+  community: <><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M15 15a5 5 0 0 1 6 5"/></>,
   report: <><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></>,
   profile: <><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></>,
   bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></>,
@@ -91,6 +94,7 @@ const pageMeta: Record<Page, { title: string; subtitle: string }> = {
   insights: { title: 'Your insights', subtitle: 'Connections from your recent health and nutrition logs.' },
   recommendations: { title: 'For you', subtitle: 'Small, practical steps based on your preferences.' },
   assistant: { title: 'AI health assistant', subtitle: 'General nutrition and wellness support, whenever you need it.' },
+  community: { title: 'Health community', subtitle: 'Share experiences, encouragement, and everyday wellness ideas.' },
   reports: { title: 'Health reports', subtitle: 'A clear summary to support conversations with your care team.' },
   profile: { title: 'Profile & privacy', subtitle: 'Manage your experience and health-data preferences.' },
 }
@@ -104,6 +108,7 @@ const navItems: { page: Page; label: string; icon: IconName }[] = [
   { page: 'insights', label: 'Insights', icon: 'insights' },
   { page: 'recommendations', label: 'For you', icon: 'sparkles' },
   { page: 'assistant', label: 'AI assistant', icon: 'chat' },
+  { page: 'community', label: 'Health community', icon: 'community' },
   { page: 'reports', label: 'Reports', icon: 'report' },
   { page: 'profile', label: 'Profile', icon: 'profile' },
 ]
@@ -849,6 +854,42 @@ function Assistant() {
 
 
 
+function Community() {
+  type CommunityPost = { id: number; name: string; initials: string; time: string; category: string; text: string; likes: number; liked: boolean }
+  const starterPosts: CommunityPost[] = [
+    { id: 1, name: 'Aanya', initials: 'A', time: 'Today · 9:15 AM', category: 'Daily habits', text: 'I started keeping a water bottle near my study desk. It is a small reminder that helps me take regular water breaks. What tiny habit has been helping you lately?', likes: 12, liked: false },
+    { id: 2, name: 'Mira', initials: 'M', time: 'Today · 8:40 AM', category: 'Food & nutrition', text: 'Sharing a simple snack idea: fruit with yogurt and a handful of nuts. Easy to put together when the day gets busy!', likes: 8, liked: false },
+    { id: 3, name: 'Riya', initials: 'R', time: 'Yesterday · 6:20 PM', category: 'Mindful routines', text: 'A short screen break and a little stretch between tasks made my evening feel more relaxed. Gentle reminders can make a difference.', likes: 16, liked: false },
+  ]
+  const [posts, setPosts] = useState<CommunityPost[]>(() => {
+    try { const saved = localStorage.getItem('nutrisync-community-posts'); return saved ? JSON.parse(saved) : starterPosts }
+    catch { return starterPosts }
+  })
+  const [draft, setDraft] = useState('')
+  const [category, setCategory] = useState('Daily habits')
+  const [filter, setFilter] = useState('All topics')
+  const [notice, setNotice] = useState('')
+  const save = (next: CommunityPost[]) => { setPosts(next); localStorage.setItem('nutrisync-community-posts', JSON.stringify(next)) }
+  const publish = () => {
+    const text = draft.trim()
+    if (!text) { setNotice('Write a little something before sharing.'); return }
+    if (text.length > 500) { setNotice('Please keep your post under 500 characters.'); return }
+    const next = [{ id: Date.now(), name: 'You', initials: 'Y', time: 'Just now', category, text, likes: 0, liked: false }, ...posts]
+    save(next); setDraft(''); setNotice('Your post has been added to the community!')
+  }
+  const toggleLike = (id: number) => save(posts.map(post => post.id === id ? { ...post, liked: !post.liked, likes: Math.max(0, post.likes + (post.liked ? -1 : 1)) } : post))
+  const visible = filter === 'All topics' ? posts : posts.filter(post => post.category === filter)
+  return <div className="page-stack community-page">
+    <section className="community-hero"><div><span className="community-kicker">A SUPPORTIVE SPACE</span><h2>Better together, one small step at a time.</h2><p>Exchange everyday ideas, celebrate progress, and encourage one another on your wellness journeys.</p></div><div className="community-hero-art"><span>♡</span><small>kindness<br/>counts</small></div></section>
+    <div className="community-guidelines"><span>✦ Community guidelines</span><p>Be kind and respectful. Protect your privacy. Share personal experiences, not diagnoses or medical instructions. For health concerns, speak with a qualified professional.</p></div>
+    <section className="card community-composer"><div className="community-section-title"><div><span className="card-kicker">YOUR COMMUNITY</span><h2>Start a conversation</h2></div><span className="community-online">● A welcoming space</span></div><textarea value={draft} onChange={e=>{setDraft(e.target.value);setNotice('')}} maxLength={500} placeholder="Share a small win, a routine that helps, or a question for the community…"/><div className="composer-bottom"><select value={category} onChange={e=>setCategory(e.target.value)}><option>Daily habits</option><option>Food & nutrition</option><option>Mindful routines</option><option>Motivation</option></select><span>{draft.length}/500</span><button className="button primary" onClick={publish}>Share post <Icon name="send" size={15}/></button></div>{notice && <small className="community-notice">{notice}</small>}</section>
+    <section className="community-feed"><div className="community-feed-head"><div><h2>Community conversations</h2><p>Ideas and encouragement from members</p></div><select value={filter} onChange={e=>setFilter(e.target.value)}><option>All topics</option><option>Daily habits</option><option>Food & nutrition</option><option>Mindful routines</option><option>Motivation</option></select></div>
+      {visible.length === 0 ? <div className="card community-empty">No posts in this topic yet. Be the first to share an idea!</div> : visible.map(post=><article className="card community-post" key={post.id}><div className="post-author"><div className="post-avatar">{post.initials}</div><div><strong>{post.name}</strong><small>{post.time}</small></div><span className="post-category">{post.category}</span></div><p className="post-copy">{post.text}</p><div className="post-actions"><button onClick={()=>toggleLike(post.id)} className={post.liked?'liked':''}><span>{post.liked?'♥':'♡'}</span> {post.likes} {post.likes===1?'like':'likes'}</button><span>Be supportive · Keep it kind</span></div></article>)}
+    </section>
+    <p className="community-disclaimer">Demo community: posts and likes are saved in this browser only. Do not share personal contact details or sensitive health information.</p>
+  </div>
+}
+
 function Reports() {
   const reportItems = ['Nutrition averages','Symptoms & check-ins','Sleep patterns','Cycle data (optional)','AI-observed patterns','Current preferences']
   const [selected, setSelected] = useState<string[]>(() => {
@@ -919,9 +960,9 @@ export default function App() {
   const go = (next: Page) => { setPage(next); window.scrollTo({top:0,behavior:'smooth'}) }
   const content: Record<Page, ReactNode> = {
     home:<Home go={go}/>, nutrition:<Nutrition go={go}/>, scanner:<Scanner/>, health:<Health go={go}/>, period:<Period/>,
-    insights:<Insights go={go}/>, recommendations:<Recommendations/>, assistant:<Assistant/>, reports:<Reports/>, profile:<Profile/>
+    insights:<Insights go={go}/>, recommendations:<Recommendations/>, assistant:<Assistant/>, community:<Community/>, reports:<Reports/>, profile:<Profile/>
   }
-  const mobileNav = navItems.filter(x=>['home','nutrition','health','insights','profile'].includes(x.page))
+  const mobileNav = navItems.filter(x=>['home','nutrition','health','community','profile'].includes(x.page))
   return <div className="app-shell">
     <aside className="sidebar"><button className="brand" onClick={()=>go('home')}><span className="brand-mark"><Icon name="nutrition"/></span><span><strong>NutriSync</strong><small>AI</small></span></button><p className="nav-label">YOUR WELLNESS</p><nav>{navItems.map(item=><button key={item.page} className={page===item.page?'active':''} onClick={()=>go(item.page)}><Icon name={item.icon}/><span>{item.label}</span>{item.page==='assistant'&&<b>AI</b>}</button>)}</nav><div className="sidebar-note"><Icon name="shield"/><div><strong>Your privacy matters</strong><span>Your health data is encrypted and always in your control.</span></div></div><div className="sidebar-user"><div className="avatar">MJ</div><div><strong>Maya Johnson</strong><span>Personal plan</span></div><Icon name="chevron"/></div></aside>
     <main><Header page={page}/><div className="content">{content[page]}</div><footer><strong>NutriSync AI</strong><span>General wellness support, not medical advice.</span><small>© 2025 NutriSync</small></footer></main>
